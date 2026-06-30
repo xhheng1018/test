@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: db_reggie
+  # Thymeleaf模板配置（Thymeleaf页面必加，开发关闭缓存）
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+    mode: HTML5
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/db_reggie?serverTimezone=Asia/Shanghai&useSSL=false&zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true
+    username: root
+    password: 051018
+    type: com.alibaba.druid.pool.DruidDataSource
+  # 文件上传大小限制（菜品图片上传必备）
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.xzcit.duanfengheng.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  # 注释全局主键，避免和实体AUTO冲突
+  # global-config:
+  #   db-config:
+  #     id-type: ASSIGN_ID
+
+# 菜品图片本地存储路径（Windows双斜杠写法正确）
+reggie:
+  path: D:\\images\\

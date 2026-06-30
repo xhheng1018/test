@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>修改套餐</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.7.14/vue.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", system-ui, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            color: #303133;
+            padding: 30px 35px;
+            min-height: 100vh;
+        }
+        .top-banner {
+            background: linear-gradient(90deg, #7b61ff, #9179ff);
+            border-radius: 16px;
+            padding: 24px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            margin-bottom: 24px;
+        }
+        .banner-left h2 {
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+        .form-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            max-width: 1000px;
+        }
+        .img-preview {
+            border-radius: 8px;
+            border: 1px solid #e4e7ed;
+            margin-top: 10px;
+        }
+        .empty-dish {
+            text-align: center;
+            padding: 40px 0;
+            color: #909399;
+        }
+        .empty-dish i {
+            font-size: 36px;
+            color: #dcdfe6;
+            margin-bottom: 10px;
+        }
+        .btn-wrap {
+            margin-top: 36px;
+            display: flex;
+            gap: 16px;
+        }
+        /* 弹窗菜品分类样式 */
+        .dish-dialog-wrap {
+            display: flex;
+        }
+        .cate-left {
+            width: 180px;
+            border-right: 1px solid #ebeef5;
+            padding-right:15px;
+        }
+        .cate-item {
+            padding:10px 8px;
+            cursor: pointer;
+            border-radius:4px;
+            margin-bottom:4px;
+        }
+        .cate-item.act {
+            background-color:#409eff;
+            color:#fff;
+        }
+        .table-right {
+            flex:1;
+            padding-left:15px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="top-banner">
+        <div class="banner-left">
+            <h2>修改套餐</h2>
+            <p>修改套餐基础信息、更换分类、调整菜品搭配</p>
+        </div>
+        <div class="banner-right">
+            <el-button @click="backToList"><i class="fas fa-arrow-left"></i> 返回套餐列表</el-button>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <el-form ref="form" :model="form" label-width="130px">
+            <el-form-item label="套餐分类" prop="categoryId">
+                <el-select v-model="form.categoryId" placeholder="请选择【套餐分类】" style="width: 400px;">
+                    <el-option v-for="item in categoryList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="套餐名称" prop="name">
+                <el-input v-model="form.name" placeholder="请输入套餐名称" style="width: 400px;"></el-input>
+            </el-form-item>
+            <el-form-item label="套餐价格(元)" prop="price">
+                <el-input v-model="form.price" placeholder="输入单价，单位元" style="width: 400px;"></el-input>
+            </el-form-item>
+            <el-form-item label="套餐封面图片">
+                <el-upload action="/upload" :on-success="uploadSuccess">
+                    <el-button type="primary"><i class="fas fa-upload"></i> 重新上传图片</el-button>
+                </el-upload>
+                <div v-if="form.image">
+                    <img :src="form.image" width="120" class="img-preview"/>
+                </div>
+            </el-form-item>
+            <el-form-item label="套餐描述">
+                <el-input v-model="form.description" type="textarea" rows="3" placeholder="简单描述套餐内容" style="width: 600px;"></el-input>
+            </el-form-item>
+
+            <el-divider content-position="left">当前套餐包含菜品</el-divider>
+            <el-table :data="dishList" border v-if="dishList.length > 0">
+                <el-table-column label="菜品名称" prop="name" width="220"></el-table-column>
+                <el-table-column label="菜品单价">
+                    <template #default="scope">
+                        <span style="color:#67c23a">¥{{ (scope.row.price / 100).toFixed(2) }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="份数" width="140">
+                    <template #default="scope">
+                        <el-input-number v-model="scope.row.copies" :min="1"></el-input-number>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="120">
+                    <template #default="scope">
+                        <el-button size="small" type="danger" text @click="removeDish(scope.$index)">移除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <div class="empty-dish" v-else>
+                <i class="fas fa-utensils"></i>
+                <p>暂无菜品，请点击下方按钮添加菜品</p>
+            </div>
+            <el-button type="primary" @click="openDishDialog"><i class="fas fa-plus"></i> 新增菜品到套餐</el-button>
+
+            <div class="btn-wrap">
+                <el-button type="primary" @click="submit"><i class="fas fa-save"></i> 保存修改</el-button>
+                <el-button @click="backToList">返回列表</el-button>
+            </div>
+        </el-form>
+    </div>
+
+    <!-- 菜品选择弹窗 -->
+    <el-dialog title="选择菜品加入套餐" v-model="dialogVisible" width="70%">
+        <div class="dish-dialog-wrap">
+            <div class="cate-left">
+                <div class="cate-item" v-for="(item,index) in dishType" :key="index"
+                     :class="{act: index == keyInd}"
+                     @click="checkTypeHandle(index, item.id)">
+                    {{ item.name }}
+                </div>
+            </div>
+            <div class="table-right">
+                <el-table :data="dishAddList" border @row-click="selectDish">
+                    <el-table-column label="菜品名称" prop="name"></el-table-column>
+                    <el-table-column label="售价">
+                        <template #default="scope">¥{{ (scope.row.price / 100).toFixed(2) }}</template>
+                    </el-table-column>
+                    <el-table-column label="状态">
+                        <template #default="scope">
+                            <el-tag size="small" type="success" v-if="scope.row.status===1">起售</el-tag>
+                            <el-tag size="small" type="danger" v-else>停售</el-tag>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+    </el-dialog>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                id: '',
+                form: {
+                    id: '',
+                    categoryId: '',
+                    name: '',
+                    price: '',
+                    image: '',
+                    description: '',
+                    setmealDishes: []
+                },
+                categoryList: [],
+                dishType: [],
+                keyInd: 0,
+                dishAddList: [],
+                dishList: [],
+                dialogVisible: false
+            }
+        },
+        created() {
+            // 截取url?id=xxx
+            const url = window.location.href;
+            if(url.includes('id=')){
+                this.id = url.split('id=')[1];
+            }
+            this.loadSetmealCate();
+            this.loadDishCate();
+            if(this.id){
+                this.loadSetmealDetail();
+            }
+        },
+        methods: {
+            // 加载套餐分类 type=2
+            loadSetmealCate() {
+                axios.get('/category/list?type=2').then(res => {
+                    if(res.data.code === 1){
+                        this.categoryList = res.data.data || [];
+                    }else{
+                        this.$message.warning(res.data.msg || "加载套餐分类失败");
+                        this.categoryList = [];
+                    }
+                }).catch(()=>{
+                    this.categoryList = [];
+                })
+            },
+            // 加载菜品分类 type=1
+            loadDishCate() {
+                axios.get('/category/list?type=1').then(res => {
+                    if(res.data.code === 1){
+                        this.dishType = res.data.data || [];
+                        if(this.dishType.length > 0){
+                            this.loadDishByCate(this.dishType[0].id);
+                        }
+                    }else{
+                        this.$message.warning(res.data.msg || "加载菜品分类失败");
+                        this.dishType = [];
+                    }
+                }).catch(()=>{
+                    this.dishType = [];
+                })
+            },
+            // 根据分类id加载上架菜品
+            loadDishByCate(cateId) {
+                axios.get('/dish/list', {
+                    params: {categoryId: cateId}
+                }).then(res => {
+                    if(res.data.code === 1){
+                        this.dishAddList = res.data.data || [];
+                    }else{
+                        this.dishAddList = [];
+                    }
+                }).catch(()=>{
+                    this.dishAddList = [];
+                })
+            },
+            // 切换菜品分类
+            checkTypeHandle(index, cateId) {
+                this.keyInd = index;
+                this.loadDishByCate(cateId);
+            },
+            // 打开弹窗
+            openDishDialog() {
+                this.keyInd = 0;
+                if(this.dishType.length > 0){
+                    this.loadDishByCate(this.dishType[0].id);
+                }
+                this.dialogVisible = true;
+            },
+            // 点击菜品加入列表（去重）
+            selectDish(row) {
+                const has = this.dishList.some(item => item.dishId === row.id);
+                if(has){
+                    return this.$message.warning("该菜品已添加，不可重复选择");
+                }
+                const obj = {
+                    dishId: row.id,
+                    name: row.name,
+                    price: row.price,
+                    copies: 1
+                }
+                this.dishList.push(obj);
+                this.dialogVisible = false;
+                this.$message.success("添加菜品成功");
+            },
+            // 移除已选菜品
+            removeDish(index) {
+                this.dishList.splice(index, 1);
+            },
+            // 图片上传回调
+            uploadSuccess(res) {
+                this.form.image = res.data;
+                this.$message.success("图片上传完成");
+            },
+            // 回显套餐详情
+            loadSetmealDetail() {
+                axios.get(`/setmeal/${this.id}`).then(res => {
+                    if(res.data.code !== 1 || !res.data.data){
+                        this.$message.error("套餐不存在");
+                        return;
+                    }
+                    const data = res.data.data;
+                    this.form = {
+                        id: data.id,
+                        categoryId: data.categoryId,
+                        name: data.name,
+                        price: data.price ? (data.price / 100).toFixed(2) : '',
+                        image: data.image,
+                        description: data.description,
+                        setmealDishes: []
+                    };
+                    this.dishList = data.setmealDishes || [];
+                }).catch(()=>{
+                    this.$message.error("获取套餐信息失败");
+                })
+            },
+            // 提交修改
+            submit() {
+                if (!this.form.categoryId) return this.$message.warning("请选择套餐分类");
+                if (!this.form.name) return this.$message.warning("请填写套餐名称");
+                if (!this.form.price) return this.$message.warning("请填写套餐价格");
+                if (this.dishList.length === 0) return this.$message.warning("至少保留一款套餐菜品");
+
+                // 元转分，消除浮点误差
+                const priceNum = parseFloat(this.form.price);
+                this.form.price = Math.round(priceNum * 100);
+                this.form.setmealDishes = this.dishList;
+
+                axios.put('/setmeal', this.form).then(res => {
+                    if(res.data.code === 1){
+                        this.$message.success("套餐修改成功");
+                        window.location.href = "/backend/page/setmeal.html";
+                    }else{
+                        this.$message.error(res.data.msg || "修改失败");
+                    }
+                }).catch(()=>{
+                    this.$message.error("请求异常，修改失败");
+                })
+            },
+            backToList() {
+                window.location.href = "/backend/page/setmeal.html";
+            }
+        }
+    })
+</script>
+</body>
+</html>

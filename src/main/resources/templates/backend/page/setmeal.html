@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>套餐管理</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.7.14/vue.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", system-ui, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            color: #303133;
+            padding: 30px 35px;
+            min-height: 100vh;
+        }
+        .top-banner {
+            background: linear-gradient(90deg, #7b61ff, #9179ff);
+            border-radius: 16px;
+            padding: 24px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            margin-bottom: 24px;
+        }
+        .banner-left h2 {
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+        .banner-right {
+            display: flex;
+            gap: 12px;
+        }
+        .el-button--primary.banner-btn {
+            background: #fff;
+            color: #7b61ff;
+            border: none;
+        }
+        .page-search-bar {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .table-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .img-preview {
+            border-radius: 8px;
+            border: 1px solid #e4e7ed;
+            object-fit: cover;
+        }
+        .el-tag--success {
+            background: rgba(103, 194, 58, 0.12);
+            border-color: #67c23a;
+            color: #67c23a;
+        }
+        .el-tag--danger {
+            background: rgba(245, 108, 108, 0.12);
+            border-color: #f56c6c;
+            color: #f56c6c;
+        }
+        .empty-tip {
+            text-align: center;
+            padding: 60px 0;
+            color: #909399;
+        }
+        .empty-tip i {
+            font-size: 48px;
+            color: #dcdfe6;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- 顶部紫色横幅 -->
+    <div class="top-banner">
+        <div class="banner-left">
+            <h2>套餐管理</h2>
+            <p>统一管理店内套餐，支持新增、编辑、删除、上下架</p>
+        </div>
+        <div class="banner-right">
+            <el-button class="banner-btn" @click="backIndex"><i class="fas fa-home"></i> 返回主页面</el-button>
+            <el-button type="primary" @click="openAdd"><i class="fas fa-plus"></i> 新增套餐</el-button>
+        </div>
+    </div>
+
+    <!-- 搜索栏 -->
+    <div class="page-search-bar">
+        <span>套餐名称：</span>
+        <el-input placeholder="输入套餐名称模糊搜索" v-model="name" clearable style="width:320px;"></el-input>
+        <el-button type="primary" @click="loadData"><i class="fas fa-search"></i> 搜索</el-button>
+        <el-button @click="resetSearch">重置</el-button>
+        <div style="margin-left:auto;">
+            <el-button type="danger" @click="batchDelete" :disabled="multipleIds.length===0"><i class="fas fa-trash-alt"></i> 批量删除</el-button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <el-table :data="tableData" border @selection-change="handleSelection">
+            <el-table-column type="selection" width="60"></el-table-column>
+            <el-table-column label="套餐图片" width="120">
+                <template #default="scope">
+                    <img v-if="scope.row.image" :src="scope.row.image" width="70" height="70" class="img-preview" @error="$event.target.style.display='none'"/>
+                    <span v-else style="color:#909399">无图</span>
+                </template>
+            </el-table-column>
+            <el-table-column label="套餐名称" prop="name" min-width="160"></el-table-column>
+            <el-table-column label="所属套餐分类" prop="categoryName" width="160"></el-table-column>
+            <el-table-column label="套餐售价" width="120">
+                <template #default="scope">
+                    <span style="color:#67c23a;font-weight:600;">¥{{ (scope.row.price / 100).toFixed(2) }}</span>
+                </template>
+            </el-table-column>
+            <el-table-column label="状态" width="100">
+                <template #default="scope">
+                    <el-tag type="success" v-if="scope.row.status===1">起售</el-tag>
+                    <el-tag type="danger" v-else>停售</el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column label="操作" width="320">
+                <template #default="scope">
+                    <el-button size="small" type="primary" text @click="openEdit(scope.row)">
+                        <i class="fas fa-edit"></i> 编辑
+                    </el-button>
+                    <!-- 上下架按钮：status=1显示停售，status=0显示起售 -->
+                    <el-button size="small" type="warning" text @click="changeStatus(scope.row)">
+                        {{ scope.row.status===1 ? '停售' : '起售' }}
+                    </el-button>
+                    <el-button size="small" type="danger" text @click="singleDelete(scope.row)">
+                        删除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <div class="empty-tip" v-if="tableData.length===0">
+            <i class="fas fa-box-open"></i>
+            <div>暂无套餐数据，点击上方「新增套餐」创建</div>
+        </div>
+
+        <el-pagination
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="page"
+                :page-sizes="[5,10,15,20]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="total"
+                style="margin-top:20px;text-align:right;">
+        </el-pagination>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                tableData: [],
+                page: 1,
+                pageSize: 10,
+                total: 0,
+                name: '',
+                multipleIds: []
+            }
+        },
+        created() {
+            this.loadData()
+        },
+        methods: {
+            // 加载套餐分页列表
+            loadData() {
+                axios.get('/setmeal/page', {
+                    params: {
+                        page: this.page,
+                        pageSize: this.pageSize,
+                        name: this.name
+                    }
+                }).then(res => {
+                    if (res.data.code === 1) {
+                        this.tableData = res.data.data.records
+                        this.total = res.data.data.total
+                    }
+                })
+            },
+            // 重置搜索
+            resetSearch() {
+                this.name = '';
+                this.page = 1;
+                this.loadData();
+            },
+            // 返回首页
+            backIndex() {
+                window.location.href = "/backend/page/index.html";
+            },
+            // 跳新增套餐页面
+            openAdd() {
+                window.location.href = '/backend/page/setmeal-add.html'
+            },
+            // 跳编辑套餐页面，携带id参数
+            openEdit(row) {
+                window.location.href = `/backend/page/setmeal-edit.html?id=${row.id}`
+            },
+            // 每页条数切换
+            handleSizeChange(val) {
+                this.pageSize = val
+                this.loadData()
+            },
+            // 页码切换
+            handleCurrentChange(val) {
+                this.page = val
+                this.loadData()
+            },
+            // 多选框选中回调，收集id数组
+            handleSelection(val) {
+                this.multipleIds = val.map(item => item.id)
+            },
+            // 单条套餐 起售/停售
+            changeStatus(row) {
+                let ids = [row.id]
+                let targetStatus = row.status === 1 ? 0 : 1
+                axios.post(`/setmeal/status/${targetStatus}`, null, {
+                    params: {
+                        ids: ids
+                    },
+                    // 序列化数组参数，后端@RequestParam正常接收
+                    paramsSerializer: params => {
+                        return params.ids.map(v => `ids=${v}`).join('&')
+                    }
+                }).then(res => {
+                    this.$message.success(res.data.msg)
+                    this.loadData()
+                }).catch(err => {
+                    this.$message.error(err.response.data.msg || "操作失败")
+                })
+            },
+            // 单条删除套餐
+            singleDelete(row) {
+                this.$confirm('确定删除该套餐？在售套餐禁止删除，删除后关联菜品一并清除', '操作确认', {
+                    type: 'warning'
+                }).then(() => {
+                    axios.delete('/setmeal', {
+                        params: {ids: [row.id]},
+                        paramsSerializer: params => {
+                            return params.ids.map(v => `ids=${v}`).join('&')
+                        }
+                    }).then(res => {
+                        this.$message.success(res.data.msg)
+                        this.loadData()
+                    }).catch(err => {
+                        this.$message.error(err.response.data.msg)
+                    })
+                }).catch(()=>{})
+            },
+            // 批量删除套餐
+            batchDelete() {
+                this.$confirm('确定批量删除选中套餐？仅停售套餐可删除', '操作确认', {
+                    type: 'warning'
+                }).then(() => {
+                    axios.delete('/setmeal', {
+                        params: {ids: this.multipleIds},
+                        paramsSerializer: params => {
+                            return params.ids.map(v => `ids=${v}`).join('&')
+                        }
+                    }).then(res => {
+                        this.$message.success(res.data.msg)
+                        this.multipleIds = []
+                        this.loadData()
+                    }).catch(err => {
+                        this.$message.error(err.response.data.msg)
+                    })
+                }).catch(()=>{})
+            }
+        }
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xzcit.duanfengheng.mapper.SetmealDishMapper">
+    <insert id="insertBatchSomeColumn">
+        INSERT INTO setmeal_dish
+        (setmeal_id, dish_id, name, price, copies, sort, create_time, update_time, create_user, update_user)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.setmealId},
+            #{item.dishId},
+            #{item.name},
+            #{item.price},
+            #{item.copies},
+            #{item.sort},
+            #{item.createTime},
+            #{item.updateTime},
+            #{item.createUser},
+            #{item.updateUser}
+            )
+        </foreach>
+    </insert>
+</mapper>

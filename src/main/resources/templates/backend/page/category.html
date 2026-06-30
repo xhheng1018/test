@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分类管理 | 餐饮后台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f5f7fa;
+            font-family: "Microsoft YaHei", sans-serif;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 24px 30px;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title h1 {
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .header-title p {
+            opacity: 0.85;
+            font-size: 14px;
+        }
+        .btn-add {
+            background: #fff;
+            color: #667eea;
+            font-weight: 600;
+            padding: 10px 22px;
+            border-radius: 30px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(255,255,255,0.3);
+        }
+        .btn-home {
+            background: #fff;
+            color: #667eea;
+            font-weight: 600;
+            padding: 10px 22px;
+            border-radius: 30px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(255,255,255,0.3);
+        }
+        .btn-wrap {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+        /* 搜索栏样式 */
+        .search-bar {
+            background: #fff;
+            padding: 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
+            display: flex;
+            gap:12px;
+            align-items: center;
+        }
+        .search-bar input {
+            padding: 10px 14px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            width:300px;
+            font-size:16px;
+        }
+        .search-bar button {
+            padding:10px 20px;
+            background:#667eea;
+            color:#fff;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+        }
+        .search-bar .reset-btn {
+            background:#999;
+        }
+        .table-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th,td {
+            border: 1px solid #eee;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background: #f8f9ff;
+            color: #444;
+        }
+        tr:hover td {
+            background: #f0f4ff;
+        }
+        .tag-food {
+            background: #e8f4ff;
+            color: #409eff;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+        .tag-setmeal {
+            background: #f0ffe8;
+            color: #67c23a;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+        .page-wrap {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .page-wrap a {
+            margin: 0 4px;
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #333;
+        }
+        .page-wrap a.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .empty-box {
+            padding: 80px 0;
+            text-align: center;
+            color: #999;
+        }
+        .btn-edit {
+            color: #409eff;
+            text-decoration: none;
+            margin-right:10px;
+        }
+        .btn-del {
+            color: #f56c6c;
+            text-decoration: none;
+        }
+
+        /* 弹窗样式 默认隐藏 */
+        .modal-mask {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px;
+            width: 460px;
+        }
+    </style>
+</head>
+<body>
+<div class="header-card">
+    <div class="header-title">
+        <h1>菜品&套餐分类管理</h1>
+        <p>统一管理菜品分类、套餐分类，支持新增、编辑、删除、排序</p>
+    </div>
+    <!-- 按钮组：返回首页 + 新增分类 -->
+    <div class="btn-wrap">
+        <a th:href="@{/index}" class="btn-home">返回主页面</a>
+        <a href="javascript:void(0)" class="btn-add">+ 新增分类</a>
+    </div>
+</div>
+
+<!-- 搜索区域 -->
+<div class="search-bar">
+    <form th:action="@{/category}" method="get">
+        <label>分类名称：</label>
+        <input type="text" name="name" th:value="${pageName}" placeholder="输入分类名称模糊搜索">
+        <button type="submit">搜索</button>
+        <a th:href="@{/category}"><button type="button" class="reset-btn">重置</button></a>
+    </form>
+</div>
+
+<div class="table-card">
+    <table>
+        <tr>
+            <th>主键ID</th>
+            <th>分类名称</th>
+            <th>分类类型</th>
+            <th>排序值</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+        <th:block th:if="${pageData.records.size() == 0}">
+            <tr>
+                <td colspan="6" class="empty-box">暂无分类数据，请点击上方新增按钮创建</td>
+            </tr>
+        </th:block>
+        <tr th:each="item : ${pageData.records}">
+            <td th:text="${item.id}"></td>
+            <td th:text="${item.name}"></td>
+            <td>
+                    <span th:class="${item.type == 1 ? 'tag-food' : 'tag-setmeal'}"
+                          th:text="${item.type == 1 ? '菜品分类' : '套餐分类'}"></span>
+            </td>
+            <td th:text="${item.sort}"></td>
+            <td th:text="${item.createTime}"></td>
+            <td>
+                <a th:href="@{/category/edit(id=${item.id},name=${pageName})}" class="btn-edit">编辑</a>
+                <a th:href="@{/category/delete(id=${item.id},name=${pageName})}" class="btn-del" onclick="return confirm('确定删除？')">删除</a>
+            </td>
+        </tr>
+    </table>
+
+    <!-- 分页携带搜索关键字 -->
+    <div class="page-wrap">
+        <span>共<span th:text="${pageData.total}"></span>条</span>
+        <a th:if="${pageData.current > 1}" th:href="@{/category(page=${pageData.current - 1},name=${pageName})}">上一页</a>
+        <span th:text="${pageData.current}"></span> / <span th:text="${pageData.pages}"></span>
+        <a th:if="${pageData.current < pageData.pages}" th:href="@{/category(page=${pageData.current + 1},name=${pageName})}">下一页</a>
+    </div>
+</div>
+
+<!-- 新增弹窗 -->
+<div class="modal-mask" id="addMask">
+    <div class="modal-box">
+        <h3 style="font-size:24px;margin-bottom:12px;color:#222;">新增分类</h3>
+        <!-- 重复名称错误提示 -->
+        <p th:if="${errorMsg}" style="color:#f56c6c;margin-bottom:16px;" th:text="${errorMsg}"></p>
+        <form th:action="@{/category/save}" method="post">
+            <div style="margin:16px 0;display:flex;align-items:center;">
+                <label style="width:110px;font-size:18px;color:#222;">分类名称：</label>
+                <input type="text" name="name" required placeholder="例：川菜" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:16px;">
+            </div>
+            <div style="margin:16px 0;display:flex;align-items:center;">
+                <label style="width:110px;font-size:18px;color:#222;">分类类型：</label>
+                <select name="type" required style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:16px;">
+                    <option value="">请选择</option>
+                    <option value="1">菜品分类</option>
+                    <option value="2">套餐分类</option>
+                </select>
+            </div>
+            <div style="margin:16px 0;display:flex;align-items:center;">
+                <label style="width:110px;font-size:18px;color:#222;">排序序号：</label>
+                <input type="number" name="sort" required placeholder="数字越小越靠前" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:16px;">
+            </div>
+            <div style="margin-top:30px;display:flex;gap:16px;justify-content:flex-end;">
+                <button type="button" id="closeAddBtn" style="padding:10px 24px;border:1px solid #ddd;background:#fff;border-radius:8px;font-size:16px;cursor:pointer;">取消</button>
+                <button type="submit" style="padding:10px 24px;background:#667eea;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const addMask = document.getElementById("addMask");
+    const closeAddBtn = document.getElementById("closeAddBtn");
+    const addBtn = document.querySelector(".btn-add");
+
+    addBtn.onclick = function(e){
+        e.preventDefault();
+        addMask.style.display = "flex";
+    }
+    closeAddBtn.onclick = function(){
+        addMask.style.display = "none";
+    }
+    addMask.onclick = function(e){
+        if(e.target === addMask){
+            addMask.style.display = "none";
+        }
+    }
+</script>
+</body>
+</html>

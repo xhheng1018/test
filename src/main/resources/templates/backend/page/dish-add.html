@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增菜品 | 餐饮后台管理系统</title>
+    <!-- 引入jQuery，必须放在头部 -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f5f7fa;
+            font-family: "Microsoft YaHei", system-ui, sans-serif;
+            padding: 32px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+        /* 顶部头部卡片 */
+        .header-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 28px 36px;
+            color: #ffffff;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.28);
+            margin-bottom: 26px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        .header-title p {
+            opacity: 0.88;
+            font-size: 15px;
+        }
+        .btn-wrap {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .btn-home, .btn-submit {
+            background: #fff;
+            color: #667eea;
+            font-weight: 600;
+            padding: 11px 24px;
+            border-radius: 32px;
+            text-decoration: none;
+            box-shadow: 0 6px 16px rgba(255,255,255,0.25);
+            transition: all 0.25s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .btn-submit {
+            background: #667eea;
+            color: #fff;
+        }
+        .btn-home:hover, .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255,255,255,0.35);
+        }
+        /* 表单卡片 */
+        .form-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+            padding: 36px;
+        }
+        .form-item {
+            margin-bottom: 24px;
+        }
+        .form-item label {
+            display: block;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .form-item input, .form-item select {
+            width: 100%;
+            max-width: 520px;
+            padding: 12px 16px;
+            border:1px solid #e0e0e0;
+            border-radius:10px;
+            font-size:16px;
+            transition: border 0.2s;
+        }
+        .form-item input:focus, .form-item select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        /* 图片预览 */
+        #previewImg {
+            width:120px;
+            height:120px;
+            object-fit:cover;
+            border-radius:10px;
+            box-shadow:0 3px 10px rgba(0,0,0,0.08);
+            margin:10px 0;
+            display:none;
+        }
+        /* 口味配置区块样式 */
+        .flavor-group {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            width: 560px;
+        }
+        .flavor-group .del-btn {
+            color: #f56c6c;
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .flavor-buttons {
+            margin: 16px 0;
+        }
+        .flavor-buttons button {
+            padding: 8px 16px;
+            margin-right: 12px;
+            border-radius: 8px;
+            border: 1px solid #667eea;
+            background: #fff;
+            color: #667eea;
+            cursor: pointer;
+        }
+        .flavor-buttons button.clear-all {
+            border-color: #999;
+            color: #999;
+        }
+        /* 多选下拉容器 */
+        .multi-select-box {
+            width: 100%;
+            max-width: 520px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 46px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            cursor: pointer;
+            position: relative;
+        }
+        .multi-select-box:hover {
+            border-color: #667eea;
+        }
+        .tag-item {
+            background: #e8f4ff;
+            color: #409eff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tag-item span {
+            cursor: pointer;
+        }
+        .option-dropdown {
+            position: absolute;
+            left: -1px;
+            top: calc(100% + 4px);
+            width: calc(100% + 2px);
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 99;
+            display: none;
+        }
+        .option-dropdown div {
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+        .option-dropdown div:hover {
+            background: #f0f4ff;
+        }
+    </style>
+</head>
+<body>
+<div class="header-card">
+    <div class="header-title">
+        <h1>新增菜品</h1>
+        <p>填写菜品基础信息与口味配置，提交后上架售卖</p>
+    </div>
+    <div class="btn-wrap">
+        <a th:href="@{/dish}" class="btn-home">返回菜品列表</a>
+        <button class="btn-submit" onclick="submitForm()">提交保存</button>
+    </div>
+</div>
+
+<div class="form-card">
+    <form id="dishForm" th:action="@{/dish/add}" method="post">
+        <!-- 传递搜索关键词 -->
+        <input type="hidden" name="name" th:value="${pageName}">
+
+        <!-- 菜品名称 -->
+        <div class="form-item">
+            <label>菜品名称</label>
+            <input type="text" name="name" placeholder="请输入菜品名称" required>
+        </div>
+        <!-- 所属分类下拉 -->
+        <div class="form-item">
+            <label>所属分类</label>
+            <select name="categoryId" required>
+                <option value="">请选择分类</option>
+                <option th:each="c : ${categoryList}" th:value="${c.id}" th:text="${c.name}"></option>
+            </select>
+        </div>
+        <!-- 单价 -->
+        <div class="form-item">
+            <label>单价(元)</label>
+            <input type="number" step="0.01" min="0" name="price" placeholder="请输入菜品单价" required>
+        </div>
+        <!-- 菜品图片（新增预览+上传AJAX） -->
+        <div class="form-item">
+            <label>菜品图片</label>
+            <img id="previewImg">
+            <input type="file" id="imgUpload" accept="image/*">
+            <input type="hidden" name="image" id="imageVal">
+        </div>
+
+        <!-- 口味配置区域（下拉多选） -->
+        <div class="form-item">
+            <label>口味配置</label>
+            <div id="flavorContainer">
+                <!-- 动态口味组容器 -->
+            </div>
+            <div class="flavor-buttons">
+                <button type="button" onclick="addFlavorGroup()">新增一组口味</button>
+                <button type="button" class="clear-all" onclick="clearAllFlavor()">清空所有口味输入</button>
+            </div>
+            <!-- 重点修改：name改为flavorStr，不和DishDto的flavors重名 -->
+            <input type="hidden" name="flavorStr" id="flavorsInput">
+        </div>
+
+        <!-- 售卖状态 -->
+        <div class="form-item">
+            <label>售卖状态</label>
+            <select name="status">
+                <option value="1">启售</option>
+                <option value="0">停售</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<script>
+    // ========== 图片上传逻辑 ==========
+    $("#imgUpload").change(function () {
+        let file = this.files[0];
+        if (!file) return;
+        let formData = new FormData();
+        formData.append("file", file);
+        $.ajax({
+            url: "/upload",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (fileName) {
+                // 预览图片
+                $("#previewImg").attr("src", "/images/" + fileName).show();
+                // 赋值隐藏域，表单提交携带图片名
+                $("#imageVal").val(fileName);
+            }
+        })
+    })
+
+    // 预设口味分类与对应选项
+    const flavorOptionMap = {
+        "辣度": ["不辣", "微辣", "中辣", "特辣"],
+        "忌口": ["无葱姜", "不吃蒜", "不吃香菜"],
+        "甜度": ["无糖", "少糖", "正常糖", "多糖"],
+        "分量": ["小份", "中份", "大份"]
+    };
+    // 口味组数组
+    let flavorList = [
+        { typeName: "辣度", selected: [] },
+        { typeName: "忌口", selected: [] }
+    ];
+
+    // 渲染所有口味组
+    function renderFlavor() {
+        const container = document.getElementById("flavorContainer");
+        container.innerHTML = "";
+        flavorList.forEach((group, index) => {
+            const groupDom = document.createElement("div");
+            groupDom.className = "flavor-group";
+            groupDom.innerHTML = `
+                <div class="form-item">
+                    <label>口味类型</label>
+                    <select onchange="changeFlavorType(${index},this.value)">
+                        <option value="">请选择口味分类</option>
+                        ${Object.keys(flavorOptionMap).map(key => `
+                            <option value="${key}" ${group.typeName === key ? "selected" : ""}>${key}</option>
+                        `).join("")}
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>可选口味（下拉多选）</label>
+                    <div class="multi-select-box" onclick="toggleDropdown(${index})">
+                        ${group.selected.map(item => `
+                            <div class="tag-item">${item}<span onclick="event.stopPropagation();removeOption(${index},'${item}')">×</span></div>
+                        `).join("")}
+                        <div class="option-dropdown" id="drop-${index}">
+                            ${flavorOptionMap[group.typeName]?.map(opt => `
+                                <div onclick="selectOption(${index},'${opt}')">${opt}</div>
+                            `).join("") || "<div>请先选择口味分类</div>"}
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="del-btn" onclick="delFlavorGroup(${index})">删除本组口味</button>
+            `;
+            container.appendChild(groupDom);
+        });
+        // 同步口味字符串到隐藏input
+        syncFlavorInput();
+    }
+
+    // 切换口味类型，清空已选
+    function changeFlavorType(index, type) {
+        flavorList[index].typeName = type;
+        flavorList[index].selected = [];
+        renderFlavor();
+    }
+
+    // 展开/收起下拉选项
+    function toggleDropdown(index) {
+        const dropDom = document.getElementById(`drop-${index}`);
+        dropDom.style.display = dropDom.style.display === "block" ? "none" : "block";
+    }
+
+    // 选中单个选项
+    function selectOption(index, opt) {
+        const group = flavorList[index];
+        if (!group.selected.includes(opt)) {
+            group.selected.push(opt);
+        }
+        renderFlavor();
+    }
+
+    // 删除单个选中标签
+    function removeOption(index, opt) {
+        const group = flavorList[index];
+        group.selected = group.selected.filter(item => item !== opt);
+        renderFlavor();
+    }
+
+    // 新增一组口味
+    function addFlavorGroup() {
+        flavorList.push({ typeName: "", selected: [] });
+        renderFlavor();
+    }
+
+    // 删除单组口味
+    function delFlavorGroup(index) {
+        flavorList.splice(index, 1);
+        renderFlavor();
+    }
+
+    // 清空全部口味
+    function clearAllFlavor() {
+        flavorList = [];
+        renderFlavor();
+    }
+
+    // 拼接格式：辣度:不辣,微辣|忌口:不吃香菜
+    function syncFlavorInput() {
+        const input = document.getElementById("flavorsInput");
+        const strArr = flavorList.map(g => `${g.typeName}:${g.selected.join(",")}`);
+        input.value = strArr.join("|");
+    }
+
+    // 表单提交
+    function submitForm() {
+        document.getElementById("dishForm").submit();
+    }
+
+    // 页面初始化渲染
+    window.onload = function() {
+        renderFlavor();
+        // 点击空白处关闭所有下拉
+        document.addEventListener("click", function(e) {
+            if (!e.target.closest(".multi-select-box")) {
+                document.querySelectorAll(".option-dropdown").forEach(drop => {
+                    drop.style.display = "none";
+                })
+            }
+        })
+    }
+</script>
+</body>
+</html>

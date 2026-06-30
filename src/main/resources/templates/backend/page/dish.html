@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菜品管理 | 餐饮后台管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f5f7fa;
+            font-family: "Microsoft YaHei", system-ui, sans-serif;
+            padding: 32px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+        /* 顶部头部卡片 */
+        .header-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 28px 36px;
+            color: #ffffff;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.28);
+            margin-bottom: 26px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        .header-title p {
+            opacity: 0.88;
+            font-size: 15px;
+        }
+        .btn-wrap {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .btn-home, .btn-add {
+            background: #fff;
+            color: #667eea;
+            font-weight: 600;
+            padding: 11px 24px;
+            border-radius: 32px;
+            text-decoration: none;
+            box-shadow: 0 6px 16px rgba(255,255,255,0.25);
+            transition: all 0.25s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .btn-home:hover, .btn-add:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255,255,255,0.35);
+        }
+        /* 搜索栏卡片 */
+        .search-bar {
+            background: #fff;
+            padding: 20px 28px;
+            border-radius: 20px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+            margin-bottom: 26px;
+            display: flex;
+            gap:14px;
+            align-items: center;
+        }
+        .search-bar label {
+            font-size: 15px;
+            color: #333;
+        }
+        .search-bar input {
+            padding: 11px 16px;
+            border:1px solid #e0e0e0;
+            border-radius:10px;
+            width:320px;
+            font-size:16px;
+            transition: border 0.2s;
+        }
+        .search-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .search-bar button {
+            padding:11px 22px;
+            background:#667eea;
+            color:#fff;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+            font-size:15px;
+            transition: all 0.2s;
+        }
+        .search-bar button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .search-bar .reset-btn {
+            background:#999;
+        }
+        /* 表格卡片 */
+        .table-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+            padding: 28px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th,td {
+            border: 1px solid #f0f0f0;
+            padding: 14px 10px;
+            text-align: center;
+            font-size: 15px;
+        }
+        th {
+            background: #f8f9ff;
+            color: #333;
+            font-weight: 600;
+        }
+        tr:hover td {
+            background: #f0f4ff;
+        }
+        /* 状态标签 */
+        .tag-on {
+            background: linear-gradient(90deg,#e8f4ff,#d6eaff);
+            color: #409eff;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size:14px;
+        }
+        .tag-off {
+            background: linear-gradient(90deg,#ffe8e8,#ffd8d8);
+            color: #f56c6c;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size:14px;
+        }
+        .page-wrap {
+            margin-top: 24px;
+            text-align: right;
+        }
+        .page-wrap span {
+            color:#666;
+            margin-right:10px;
+        }
+        .page-wrap a {
+            margin: 0 5px;
+            padding: 7px 14px;
+            border: 1px solid #e0e0e0;
+            text-decoration: none;
+            color: #333;
+            border-radius:8px;
+            transition:0.2s;
+        }
+        .page-wrap a:hover {
+            background:#f0f4ff;
+            border-color:#667eea;
+            color:#667eea;
+        }
+        .empty-box {
+            padding: 100px 0;
+            text-align: center;
+            color: #aaa;
+            font-size:16px;
+        }
+        .btn-edit {
+            color: #409eff;
+            text-decoration: none;
+            margin-right:12px;
+            font-size:15px;
+        }
+        .deleteBtn {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #f56c6c;
+            font-size:15px;
+        }
+        .btn-status {
+            padding:5px 10px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            margin-right:12px;
+            font-size:14px;
+            transition:0.2s;
+        }
+        .btn-status-stop {
+            background:#ffe8e8;
+            color:#f56c6c;
+        }
+        .btn-status-start {
+            background:#e8f4ff;
+            color:#409eff;
+        }
+        img {
+            width:76px;
+            height:76px;
+            object-fit:cover;
+            border-radius:10px;
+            box-shadow:0 3px 10px rgba(0,0,0,0.08);
+        }
+        .no-img-text {
+            line-height: 76px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+<div class="header-card">
+    <div class="header-title">
+        <h1>菜品管理</h1>
+        <p>统一管理所有菜品，支持新增、编辑、启停售、删除、图片上传</p>
+    </div>
+    <div class="btn-wrap">
+        <a th:href="@{/index}" class="btn-home">返回主页面</a>
+        <a th:href="@{/dish/toAdd}" class="btn-add">+ 新增菜品</a>
+    </div>
+</div>
+
+<div class="search-bar">
+    <form th:action="@{/dish}" method="get">
+        <label>菜品名称：</label>
+        <input type="text" name="name" th:value="${pageName}" placeholder="输入菜品名称模糊搜索">
+        <button type="submit">搜索</button>
+        <a th:href="@{/dish}"><button type="button" class="reset-btn">重置</button></a>
+    </form>
+</div>
+
+<div class="table-card">
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>菜品图片</th>
+            <th>菜品名称</th>
+            <th>所属分类</th>
+            <th>单价(元)</th>
+            <th>售卖状态</th>
+            <th>操作</th>
+        </tr>
+        <th:block th:if="${pageData.records.size() == 0}">
+            <tr>
+                <td colspan="7" class="empty-box">暂无菜品数据，请点击上方【新增菜品】创建</td>
+            </tr>
+        </th:block>
+        <tr th:each="item : ${pageData.records}">
+            <td th:text="${item.id}"></td>
+            <td>
+                <!-- 修复：使用字符串长度判断，空图片完全不渲染img标签，杜绝/images/ 404 -->
+                <div th:if="${#strings.length(item.image) > 0}">
+                    <img th:src="${'/images/' + item.image}" width="76" height="76">
+                </div>
+                <div th:unless="${#strings.length(item.image) > 0}" class="no-img-text">
+                    无图片
+                </div>
+            </td>
+            <td th:text="${item.name}"></td>
+            <td th:each="c : ${categoryList}" th:if="${c.id == item.categoryId}" th:text="${c.name}"></td>
+            <td th:text="${item.price}"></td>
+            <td>
+                <span th:class="${item.status == 1 ? 'tag-on' : 'tag-off'}"
+                      th:text="${item.status == 1 ? '启售中' : '已停售'}"></span>
+            </td>
+            <td>
+                <form th:action="@{/dish/status}" method="post" style="display:inline-block;">
+                    <input type="hidden" name="id" th:value="${item.id}">
+                    <input type="hidden" name="name" th:value="${pageName}">
+                    <input type="hidden" name="status" th:value="${item.status == 1 ? 0 : 1}">
+                    <button class="btn-status" th:class="${item.status == 1 ? 'btn-status-stop' : 'btn-status-start'}"
+                            type="submit" th:text="${item.status == 1 ? '停售' : '启售'}"></button>
+                </form>
+                <a th:href="@{/dish/edit(id=${item.id},name=${pageName})}" class="btn-edit">修改</a>
+                <button class="deleteBtn" th:data-id="${item.id}">删除</button>
+            </td>
+        </tr>
+    </table>
+
+    <div class="page-wrap">
+        <span>共<span th:text="${pageData.total}"></span>条数据</span>
+        <a th:if="${pageData.current > 1}" th:href="@{/dish(page=${pageData.current - 1},name=${pageName})}">上一页</a>
+        <span th:text="${pageData.current}"></span> / <span th:text="${pageData.pages}"></span>
+        <a th:if="${pageData.current < pageData.pages}" th:href="@{/dish(page=${pageData.current + 1},name=${pageName})}">下一页</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script>
+    $(function(){
+        $(".deleteBtn").click(function(){
+            let dishId = $(this).attr("data-id");
+            if(!confirm("确定删除该菜品？")){
+                return;
+            }
+            $.get("/dish/delete",{ids:dishId},function(res){
+                alert(res.msg);
+                if(res.code === 0){
+                    location.reload();
+                }
+            })
+        })
+    })
+</script>
+</body>
+</html>

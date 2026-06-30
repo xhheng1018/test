@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云禧小馆 · 管理后台首页</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", system-ui, sans-serif;
+        }
+        body {
+            background-color: #131c36;
+            color: #f1f5f9;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: rgba(41, 55, 88, 0.65);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255,255,255,0.12);
+            padding: 30px 0;
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+        .sidebar-logo {
+            text-align: center;
+            padding-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            margin: 0 20px 30px;
+        }
+        .sidebar-logo h2 {
+            font-size: 22px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        .sidebar-logo p {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-top: 6px;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #b4c2d8;
+            text-decoration: none;
+            margin: 6px 12px;
+            border-radius: 12px;
+        }
+        .menu-item i {
+            font-size: 18px;
+            width: 36px;
+        }
+        .menu-item span {
+            font-size: 15px;
+        }
+        .menu-item:hover {
+            background: rgba(96,165,250,0.22);
+            color: #fff;
+            padding-left: 36px;
+            box-shadow: 0 0 12px rgba(96,165,250,0.15);
+        }
+        .menu-item.active {
+            background: linear-gradient(90deg, rgba(96,165,250,0.3), rgba(167,139,250,0.15));
+            color: #60a5fa;
+            box-shadow: 0 0 16px rgba(96,165,250,0.2);
+        }
+
+        .main-wrap {
+            flex: 1;
+            margin-left: 260px;
+            display: flex;
+            flex-direction: column;
+        }
+        .top-header {
+            height: 70px;
+            background: linear-gradient(90deg, rgba(41, 55, 88, 0.4), rgba(30, 41, 59, 0.3));
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 35px;
+            position: sticky;
+            top: 0;
+            z-index: 9;
+        }
+        .page-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #f8fafc;
+        }
+        .user-box {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .admin-name {
+            color: #e2e8f0;
+        }
+        .logout-btn {
+            padding: 9px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(248,113,113,0.4);
+            background: rgba(248,113,113,0.12);
+            color: #fca5a5;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .logout-btn:hover {
+            background: #f87171;
+            color: white;
+            box-shadow: 0 0 14px rgba(248,113,113,0.35);
+        }
+
+        #mainIframe {
+            width: 100%;
+            min-height: calc(100vh - 70px);
+            border: none;
+            display: none;
+        }
+
+        .content-box {
+            padding: 30px 35px;
+        }
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(41, 55, 88, 0.55);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 20px;
+            padding: 26px;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.35), 0 0 20px rgba(96,165,250,0.12);
+        }
+        .stat-card.blue {
+            border-top: 4px solid #60a5fa;
+            box-shadow: 0 0 18px rgba(96,165,250,0.08) inset;
+        }
+        .stat-card.purple {
+            border-top: 4px solid #a78bfa;
+            box-shadow: 0 0 18px rgba(167,139,250,0.08) inset;
+        }
+        .stat-card.emerald {
+            border-top: 4px solid #34d399;
+            box-shadow: 0 0 18px rgba(52,211,153,0.08) inset;
+        }
+        .stat-card.amber {
+            border-top: 4px solid #fbbf24;
+            box-shadow: 0 0 18px rgba(251,191,36,0.08) inset;
+        }
+        .stat-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .stat-top span {
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+        .stat-top i {
+            font-size: 24px;
+            opacity: 0.85;
+        }
+        .stat-num {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(90deg,#fff,#cbd5e1);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .welcome-card {
+            background: linear-gradient(135deg, rgba(96,165,250,0.22), rgba(167,139,250,0.18));
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 24px;
+            padding: 40px;
+            margin-top: 10px;
+            box-shadow: 0 0 30px rgba(96,165,250,0.08);
+        }
+        .welcome-card h3 {
+            font-size: 26px;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+        .welcome-card p {
+            color: #e2e8f0;
+            line-height: 1.8;
+            max-width: 700px;
+            font-size: 15px;
+        }
+
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-box {
+            width: 420px;
+            background: #293758;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.16);
+            padding: 32px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.4);
+        }
+        .modal-box h4 {
+            font-size: 22px;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+        .modal-box p {
+            color: #cbd5e1;
+            margin-bottom: 30px;
+            line-height: 1.7;
+        }
+        .modal-btn-group {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+        }
+        .cancel-btn {
+            padding: 10px 24px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: transparent;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .cancel-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .confirm-logout {
+            padding: 10px 24px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(90deg,#ef4444,#fb7185);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(239,68,68,0.25);
+            transition: 0.2s;
+        }
+        .confirm-logout:hover {
+            box-shadow: 0 0 18px rgba(239,68,68,0.35);
+        }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <h2>云禧小馆后台</h2>
+        <p>Admin Management System</p>
+    </div>
+    <a href="javascript:switchHome()" class="menu-item active">
+        <i class="fas fa-home"></i>
+        <span>首页总览</span>
+    </a>
+    <a href="/employee" class="menu-item" onclick="switchMenu(this)">
+        <i class="fas fa-user-tie"></i>
+        <span>员工管理</span>
+    </a>
+    <a href="/dish" class="menu-item" onclick="switchMenu(this)">
+        <i class="fas fa-utensils"></i>
+        <span>菜品管理</span>
+    </a>
+    <a href="/category" class="menu-item" onclick="switchMenu(this)">
+        <i class="fas fa-list-alt"></i>
+        <span>分类管理</span>
+    </a>
+    <!-- 新增套餐管理菜单，跳转地址匹配WebMvcConfig配置 -->
+    <a href="/backend/page/setmeal.html" class="menu-item" onclick="switchMenu(this)">
+        <i class="fas fa-box-open"></i>
+        <span>套餐管理</span>
+    </a>
+    <a href="" class="menu-item" onclick="switchMenu(this)">
+        <i class="fas fa-list-alt"></i>
+        <span>订单管理</span>
+    </a>
+    <a href="" class="menu-item" onclick="switchMenu(this)">
+        <i class="fas fa-chart-line"></i>
+        <span>数据统计</span>
+    </a>
+    <a href="" class="menu-item" onclick="switchMenu(this)">
+        <i class="fas fa-cog"></i>
+        <span>系统设置</span>
+    </a>
+</div>
+
+<div class="main-wrap">
+    <div class="top-header">
+        <div class="page-title">后台仪表盘 / 首页</div>
+        <div class="user-box">
+            <span class="admin-name">欢迎，超级管理员</span>
+            <button class="logout-btn" id="logout">
+                <i class="fas fa-sign-out-alt"></i> 退出登录
+            </button>
+        </div>
+    </div>
+
+    <iframe id="mainIframe" name="mainIframe"></iframe>
+
+    <div class="content-box" id="homeContent">
+        <div class="stat-row">
+            <div class="stat-card blue">
+                <div class="stat-top">
+                    <span>今日订单</span>
+                    <i class="fas fa-shopping-bag" style="color:#60a5fa"></i>
+                </div>
+                <div class="stat-num">1,268</div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-top">
+                    <span>今日营业额</span>
+                    <i class="fas fa-yen-sign" style="color:#a78bfa"></i>
+                </div>
+                <div class="stat-num">¥36,820</div>
+            </div>
+            <div class="stat-card emerald">
+                <div class="stat-top">
+                    <span>在线员工</span>
+                    <i class="fas fa-users" style="color:#34d399"></i>
+                </div>
+                <div class="stat-num">12</div>
+            </div>
+            <div class="stat-card amber">
+                <div class="stat-top">
+                    <span>在售菜品</span>
+                    <i class="fas fa-drumstick-bite" style="color:#fbbf24"></i>
+                </div>
+                <div class="stat-num">86</div>
+            </div>
+        </div>
+
+        <div class="welcome-card">
+            <h3>👋 欢迎使用云禧小馆企业管理系统</h3>
+            <p>当前登录账号：admin（超级管理员），你拥有全部系统操作权限。你可以在左侧导航栏管理员工、菜品、菜品/套餐分类、订单与门店数据，实时查看营业数据报表。如需退出账号，请点击右上角「退出登录」按钮。</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-mask" id="mask">
+    <div class="modal-box">
+        <h4>确认退出登录？</h4>
+        <p>退出后将清空当前登录会话，需要重新输入账号密码才能进入云禧小馆后台。</p>
+        <div class="modal-btn-group">
+            <button class="cancel-btn" id="cancel">取消</button>
+            <button class="confirm-logout" id="confirm">确认退出</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 页面加载校验本地登录标识，无则跳登录页，无后端接口请求，不会报404
+    window.onload = function(){
+        let user = localStorage.getItem("adminUser");
+        if(!user){
+            window.location.href = "/login";
+        }
+    }
+
+    function switchHome() {
+        const iframe = document.getElementById("mainIframe");
+        const homeDom = document.getElementById("homeContent");
+        const titleDom = document.querySelector(".page-title");
+        iframe.style.display = "none";
+        homeDom.style.display = "block";
+        titleDom.innerText = "后台仪表盘 / 首页";
+        document.querySelectorAll(".menu-item").forEach(function(item){
+            item.classList.remove("active");
+        });
+        document.querySelector(".sidebar a[href*='switchHome']").classList.add("active");
+    }
+
+    function switchMenu(item) {
+        const url = item.getAttribute("href");
+        if(!url) return;
+        const iframe = document.getElementById("mainIframe");
+        const homeDom = document.getElementById("homeContent");
+        iframe.style.display = "block";
+        homeDom.style.display = "none";
+        iframe.src = url;
+        document.querySelectorAll(".menu-item").forEach(function(menu){
+            menu.classList.remove("active");
+        });
+        item.classList.add("active");
+    }
+
+    document.getElementById("mainIframe").onload = function () {
+        try {
+            let pageTitle = this.contentDocument.querySelector("title").innerText;
+            document.querySelector(".page-title").innerText = "后台仪表盘 / " + pageTitle;
+        } catch (e) {}
+    }
+
+    const logoutBtn = document.getElementById('logout');
+    const mask = document.getElementById('mask');
+    const cancelBtn = document.getElementById('cancel');
+    const confirmBtn = document.getElementById('confirm');
+
+    logoutBtn.onclick = function() {
+        mask.style.display = 'flex';
+    }
+    cancelBtn.onclick = function() {
+        mask.style.display = 'none';
+    }
+
+    confirmBtn.onclick = async function () {
+        let res = await fetch("/employee/logout", { method: "POST" });
+        let data = await res.json();
+        if (data.code === 1) {
+            localStorage.removeItem("adminUser");
+            window.location.href = "/login";
+        }
+    }
+</script>
+</body>
+</html>

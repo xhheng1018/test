@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑菜品 | 餐饮后台管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f5f7fa;
+            font-family: "Microsoft YaHei", system-ui, sans-serif;
+            padding: 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .header-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 28px 36px;
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.28);
+            margin-bottom: 26px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .header-title p {
+            opacity: 0.88;
+            font-size: 15px;
+        }
+        .btn-back {
+            background: #fff;
+            color: #667eea;
+            font-weight: 600;
+            padding: 11px 24px;
+            border-radius: 32px;
+            text-decoration: none;
+            box-shadow: 0 6px 16px rgba(255,255,255,0.25);
+            transition: all 0.25s ease;
+        }
+        .btn-back:hover {
+            transform: translateY(-3px);
+        }
+        .form-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+            padding: 36px;
+        }
+        .form-item {
+            margin-bottom: 24px;
+        }
+        .form-item label {
+            display: block;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .form-item input, .form-item select, .form-item textarea {
+            width: 100%;
+            max-width: 520px;
+            padding: 12px 16px;
+            border:1px solid #e0e0e0;
+            border-radius:10px;
+            font-size:16px;
+            transition: border 0.2s;
+        }
+        .form-item input:focus, .form-item select:focus, .form-item textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .img-preview {
+            width:120px;
+            height:120px;
+            object-fit:cover;
+            border-radius:10px;
+            box-shadow:0 3px 10px rgba(0,0,0,0.08);
+            margin:10px 0;
+        }
+        .flavor-box {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 20px;
+            width: 560px;
+        }
+        .flavor-box input {
+            margin-bottom: 10px;
+        }
+        .btn-group {
+            margin-top:36px;
+        }
+        .btn-save {
+            padding:12px 36px;
+            background:#667eea;
+            color:#fff;
+            border:none;
+            border-radius:10px;
+            font-size:16px;
+            cursor:pointer;
+        }
+        .tip-text {
+            color:#999;
+            font-size:14px;
+            margin:6px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="header-card">
+    <div class="header-title">
+        <h1>编辑菜品</h1>
+        <p>修改菜品基础信息、分类、价格、口味配置</p>
+    </div>
+    <a th:href="@{/dish(name=${pageName})}" class="btn-back">← 返回菜品列表</a>
+</div>
+
+<div class="form-card">
+    <form th:action="@{/dish/update}" method="post" th:object="${item}">
+        <input type="hidden" th:field="*{id}">
+        <input type="hidden" th:field="*{code}">
+        <input type="hidden" name="name" th:value="${pageName}">
+
+        <!-- 图片区域：不选文件自动保留原图 -->
+        <div class="form-item">
+            <label>当前菜品图片</label>
+            <img id="previewImg" th:if="${item.image != null and item.image != ''}" th:src="${'/images/' + item.image}" class="img-preview">
+            <p class="tip-text">选择本地图片即可替换原有菜品图片，不选择则保留原图</p>
+            <input type="file" id="imgFile" accept="image/*">
+            <input type="hidden" th:field="*{image}" id="imageName">
+        </div>
+
+        <!-- 菜品名称 -->
+        <div class="form-item">
+            <label>菜品名称</label>
+            <input type="text" th:field="*{name}" required placeholder="请输入菜品名称">
+        </div>
+
+        <!-- 所属分类 -->
+        <div class="form-item">
+            <label>所属分类</label>
+            <select name="categoryId" required>
+                <option th:each="c : ${categoryList}" th:value="${c.id}" th:text="${c.name}" th:selected="${c.id == item.categoryId}"></option>
+            </select>
+        </div>
+
+        <!-- 单价 -->
+        <div class="form-item">
+            <label>单价(元)</label>
+            <input type="number" step="0.01" min="0" th:field="*{price}" required>
+        </div>
+
+        <!-- 菜品描述 -->
+        <div class="form-item">
+            <label>菜品描述</label>
+            <textarea th:field="*{description}" rows="4"></textarea>
+        </div>
+
+        <!-- 固定单组口味，无循环无stat下标，彻底解决转换报错 -->
+        <div class="form-item">
+            <label>口味配置</label>
+            <div class="flavor-box">
+                <input name="flavors[0].name" placeholder="口味名称，如辣度" th:value="${item.flavors[0].name}">
+                <input name="flavors[0].value" placeholder="多个选项用逗号隔开，如不辣,微辣,中辣" th:value="${item.flavors[0].value}">
+            </div>
+        </div>
+
+        <!-- 售卖状态 -->
+        <div class="form-item">
+            <label>售卖状态</label>
+            <select name="status" th:field="*{status}">
+                <option value="1">启售</option>
+                <option value="0">停售</option>
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn-save">保存修改</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // 图片上传逻辑：仅选择新图片才覆盖，不选则保留原始图片
+    $("#imgFile").change(function () {
+        let file = this.files[0];
+        if (!file) return;
+        let formData = new FormData();
+        formData.append("file", file);
+        $.ajax({
+            url: "/upload",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (fileName) {
+                $("#previewImg").attr("src", "/images/" + fileName).show();
+                $("#imageName").val(fileName);
+            }
+        })
+    })
+</script>
+</body>
+</html>
